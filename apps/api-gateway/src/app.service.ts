@@ -8,7 +8,7 @@ export class AppService {
   constructor(
     @Inject('AUTH_SERVICE') private authClient: ClientProxy,
     @Inject('FILE_SERVICE') private fileClient: ClientProxy,
-  ) {}
+  ) { }
 
   async register(registerDto: RegisterDto): Promise<UserResponseDto> {
     return firstValueFrom(
@@ -43,6 +43,30 @@ export class AppService {
   async deleteFile(fileId: string, userId: string) {
     return firstValueFrom(
       this.fileClient.send('delete_file', { fileId, userId })
+    );
+  }
+
+  async getFileById(fileId: string, userId: string) {
+    return firstValueFrom(
+      this.fileClient.send('get_file_by_id', { fileId, userId })
+    );
+  }
+
+  async requestPasswordReset(email: string) {
+    return firstValueFrom(
+      this.authClient.send('request_password_reset', { email })
+    );
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    return firstValueFrom(
+      this.authClient.send('reset_password', { token, newPassword })
+    );
+  }
+
+  async getUserProfile(userId: string) {
+    return firstValueFrom(
+      this.authClient.send('get_user_profile', userId)
     );
   }
 }

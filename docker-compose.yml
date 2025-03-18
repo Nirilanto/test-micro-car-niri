@@ -42,9 +42,8 @@ services:
     env_file:
       - .env
     depends_on:
-      - auth-service
-      - file-service
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     restart: always
 
   auth-service:
@@ -54,8 +53,8 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     restart: always
 
   file-service:
@@ -65,8 +64,8 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     restart: always
 
   email-service:
@@ -76,11 +75,13 @@ services:
     env_file:
       - .env
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     restart: always
 
 volumes:
   postgres_data:
+  rabbitmq_data:
 
 networks:
   app-network:
