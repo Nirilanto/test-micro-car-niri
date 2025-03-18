@@ -1,11 +1,10 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Inject, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Inject } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { File } from './entities/file.entity';
 import { S3Service } from '../s3/s3.service';
-import { UploadFileDto, FileResponseDto } from '@app/common';
+import { FileResponseDto } from '@app/common';
 
 @Injectable()
 export class UploadsService {
@@ -16,7 +15,7 @@ export class UploadsService {
     @Inject('EMAIL_SERVICE') private emailClient: ClientProxy,
   ) {}
 
-  async uploadFile(file: Express.Multer.File, uploadFileDto: UploadFileDto): Promise<FileResponseDto> {
+  async uploadFile(file: Express.Multer.File, userId: string): Promise<FileResponseDto> {
     // Vérifier le type de fichier
     if (!['application/pdf', 'image/jpeg', 'image/jpg'].includes(file.mimetype)) {
       throw new BadRequestException('Format de fichier non supporté. Seuls les formats PDF et JPEG sont acceptés.');
@@ -29,11 +28,11 @@ export class UploadsService {
     }
     
     // Téléverser le fichier sur S3
-    const { key, url } = await this.s3Service.uploadFile(file, uploadFileDto.userId);
+    const { key, url } = await this.s3Service.uploadFile(file, userId);
     
     // Sauvegarder les métadonnées dans la base de données
     const newFile = this.filesRepository.create({
-      userId: uploadFileDto.userId,
+      userId,
       originalName: file.originalname,
       filename: key.split('/').pop(),
       mimeType: file.mimetype,
@@ -46,7 +45,7 @@ export class UploadsService {
     
     // Émettre un événement pour notification par email
     this.emailClient.emit('document_uploaded', {
-      userId: uploadFileDto.userId,
+      userId,
       fileId: newFile.id,
       filename: newFile.originalName,
     });
@@ -57,7 +56,7 @@ export class UploadsService {
       originalName: newFile.originalName,
       mimeType: newFile.mimeType,
       size: newFile.size,
-      url: newFile.s3Url,
+      url: await this.s3Service.getSignedUrl(newFile.s3Key),
       uploadedAt: newFile.uploadedAt,
     };
   }
@@ -68,21 +67,47 @@ export class UploadsService {
       order: { uploadedAt: 'DESC' },
     });
     
-    return files.map(file => ({
+    // Générer des URLs signées pour chaque fichier
+    const filesWithUrls = await Promise.all(
+      files.map(async (file) => ({
+        id: file.id,
+        originalName: file.originalName,
+        mimeType: file.mimeType,
+        size: file.size,
+        url: await this.s3Service.getSignedUrl(file.s3Key),
+        uploadedAt: file.uploadedAt,
+      }))
+    );
+    
+    return filesWithUrls;
+  }
+  
+  async getFileById(fileId: string, userId: string): Promise<FileResponseDto> {
+    const file = await this.filesRepository.findOne({ 
+      where: { id: fileId, userId } 
+    });
+    
+    if (!file) {
+      throw new NotFoundException('Fichier non trouvé ou non autorisé');
+    }
+    
+    return {
       id: file.id,
       originalName: file.originalName,
       mimeType: file.mimeType,
       size: file.size,
-      url: file.s3Url,
+      url: await this.s3Service.getSignedUrl(file.s3Key),
       uploadedAt: file.uploadedAt,
-    }));
+    };
   }
   
   async deleteFile(fileId: string, userId: string): Promise<void> {
-    const file = await this.filesRepository.findOneBy({ id: fileId, userId });
+    const file = await this.filesRepository.findOne({ 
+      where: { id: fileId, userId } 
+    });
     
     if (!file) {
-      throw new BadRequestException('Fichier non trouvé ou non autorisé');
+      throw new NotFoundException('Fichier non trouvé ou non autorisé');
     }
     
     // Supprimer de S3

@@ -25,13 +25,14 @@ export class S3Service {
       Key: key,
       Body: file.buffer,
       ContentType: file.mimetype,
+      ACL: 'private',
     };
     
-    const { Location } = await this.s3.upload(params).promise();
+    const uploadResult = await this.s3.upload(params).promise();
     
     return {
       key,
-      url: Location,
+      url: uploadResult.Location,
     };
   }
 
@@ -44,5 +45,17 @@ export class S3Service {
     };
     
     await this.s3.deleteObject(params).promise();
+  }
+
+  async getSignedUrl(key: string, expiresIn = 3600): Promise<string> {
+    const bucketName = this.configService.get('AWS_BUCKET_NAME');
+    
+    const params = {
+      Bucket: bucketName,
+      Key: key,
+      Expires: expiresIn,
+    };
+    
+    return this.s3.getSignedUrlPromise('getObject', params);
   }
 }

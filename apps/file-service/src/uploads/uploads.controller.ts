@@ -14,6 +14,6 @@ export class UploadsController {
     @UploadedFile() file: Express.Multer.File,
     @Body() uploadFileDto: UploadFileDto,
   ): Promise<FileResponseDto> {
-    return this.uploadsService.uploadFile(file, uploadFileDto);
+    return this.uploadsService.uploadFile(file, uploadFileDto.userId);
   }
 }
