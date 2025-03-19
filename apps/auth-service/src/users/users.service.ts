@@ -13,12 +13,31 @@ export class UsersService {
   ) { }
 
   async findOneByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOneBy({ email });
+    try {
+      return await this.usersRepository.findOneBy({ email });
+    } catch (error) {
+      console.error(`Erreur lors de la recherche d'utilisateur par email: ${error.message}`);
+      throw error;
+    }
   }
 
-  async findOneById(id: string): Promise<User | null> {
-    return this.usersRepository.findOneBy({ id });
+  async findOneById(id: string): Promise<UserResponseDto | null> {
+    try {
+      const user = await this.usersRepository.findOneBy({ id });
+
+      if (!user) {
+        return null;
+      }
+
+      // Retirer explicitement le mot de passe de la réponse
+      const { password, ...result } = user;
+      return result as UserResponseDto;
+    } catch (error) {
+      console.error(`Erreur lors de la recherche d'utilisateur par ID: ${error.message}`);
+      throw error;
+    }
   }
+
 
   async create(registerDto: RegisterDto): Promise<UserResponseDto> {
     const { email, password } = registerDto;
@@ -48,23 +67,29 @@ export class UsersService {
   }
 
   async validateUser(email: string, password: string): Promise<UserResponseDto | null> {
+    console.log(`Validation de l'utilisateur: ${email}`);
 
-    console.log(" MIPASS ATO LEGAAAA!!!!!!");
-    let user;
     try {
-      user = await this.findOneByEmail(email);
-      console.log(' REPONNNNNNNNNNNNNN ITO NY TEN ERRROOORRA ', user);
-    } catch (error) {
-      console.log(' ITO NY TEN ERRROOORRA ', error);
+      const user = await this.findOneByEmail(email);
 
-    }
+      if (!user) {
+        console.log(`Utilisateur non trouvé: ${email}`);
+        return null;
+      }
 
-    if (user && await bcrypt.compare(password, user.password)) {
-      const { password, ...result } = user;
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (!isPasswordValid) {
+        console.log(`Mot de passe invalide pour: ${email}`);
+        return null;
+      }
+
+      const { password: _, ...result } = user;
       return result as UserResponseDto;
+    } catch (error) {
+      console.error(`Erreur lors de la validation de l'utilisateur: ${error.message}`);
+      throw error;
     }
-
-    return null;
   }
 
   async markEmailAsVerified(userId: string): Promise<void> {
@@ -74,6 +99,21 @@ export class UsersService {
     }
 
     user.isEmailVerified = true;
+    await this.usersRepository.save(user);
+  }
+
+  async updatePassword(userId: string, newPassword: string): Promise<void> {
+    const user = await this.findOneById(userId);
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+
+    // Hacher le nouveau mot de passe
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Mettre à jour le mot de passe
+    user.password = hashedPassword;
     await this.usersRepository.save(user);
   }
 }
