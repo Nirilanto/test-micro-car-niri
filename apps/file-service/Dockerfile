@@ -3,15 +3,14 @@ FROM node:20-alpine as builder
 
 WORKDIR /app
 
-# Copier les fichiers package.json et installer les dépendances
-COPY package*.json ./
-RUN npm install
-
+# Copier les fichiers package.json et installer les dépendances avec Yarn
+COPY package.json yarn.lock ./
+RUN yarn install
 # Copier les fichiers source
 COPY . .
 
 # Compiler l'application
-RUN npm run build file-service
+RUN yarn build:file-service
 
 FROM node:20-alpine
 

@@ -27,7 +27,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-car_rental}
     ports:
-      - "5433:5432"
+      - "5433:5433"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -39,9 +39,12 @@ services:
       retries: 5
 
   api-gateway:
+    volumes:
+      - ./dist:/app/dist
+    command: node dist/apps/api-gateway/main.js
     build:
       context: .
-      dockerfile: apps/api-gateway/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "3007:3007"
     environment:
@@ -59,9 +62,13 @@ services:
     restart: always
 
   auth-service:
+    # ... configuration ...
+    volumes:
+      - ./dist:/app/dist
+    command: node dist/apps/auth-service/main.js
     build:
       context: .
-      dockerfile: apps/auth-service/Dockerfile
+      dockerfile: Dockerfile
     environment:
       - NODE_ENV=development
       - RABBITMQ_HOST=rabbitmq
@@ -84,9 +91,13 @@ services:
     restart: always
 
   file-service:
+    # ... configuration ...
+    volumes:
+      - ./dist:/app/dist
+    command: node dist/apps/file-service/main.js
     build:
       context: .
-      dockerfile: apps/file-service/Dockerfile
+      dockerfile: Dockerfile
     environment:
       - NODE_ENV=development
       - RABBITMQ_HOST=rabbitmq
@@ -113,7 +124,7 @@ services:
   email-service:
     build:
       context: .
-      dockerfile: apps/email-service/Dockerfile
+      dockerfile: Dockerfile
     environment:
       - NODE_ENV=development
       - RABBITMQ_HOST=rabbitmq
@@ -128,6 +139,9 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+    volumes:
+      - ./dist:/app/dist
+    command: node dist/apps/email-service/main
     networks:
       - app-network
     restart: always

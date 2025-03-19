@@ -12,7 +12,7 @@ export class UploadsService {
     @InjectRepository(File)
     private filesRepository: Repository<File>,
     private s3Service: S3Service,
-    @Inject('EMAIL_SERVICE') private emailClient: ClientProxy,
+    @Inject('EMAIL_SERVICE') private emailClient: ClientProxy
   ) {}
 
   async uploadFile(file: Express.Multer.File, userId: string): Promise<FileResponseDto> {
