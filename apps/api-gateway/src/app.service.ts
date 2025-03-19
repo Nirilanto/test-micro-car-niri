@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom, tap, throwError } from 'rxjs';
 import { LoginDto, RegisterDto, UserResponseDto } from '@app/common';
 
 @Injectable()
@@ -17,9 +17,16 @@ export class AppService {
   }
 
   async login(loginDto: LoginDto) {
-    return firstValueFrom(
-      this.authClient.send('login', loginDto)
-    );
+    try {
+      console.log('Login attempt:', loginDto.email);
+      const response = await firstValueFrom(
+        this.authClient.send('login', loginDto)
+      );
+      return response;
+    } catch (error) {
+      console.error('Login process error:', error);
+      throw error;
+    }
   }
 
   async verifyEmail(token: string) {

@@ -35,6 +35,8 @@ export class AppController {
   @ApiResponse({ status: 401, description: 'Identifiants invalides' })
   @Post('auth/login')
   async login(@Body() loginDto: LoginDto) {
+    console.log("ATO ZAO IZY MANDALO AA!!!!!!! api-gateway/src/app.controller.ts", loginDto);
+    
     return this.appService.login(loginDto);
   }
 
@@ -169,6 +171,8 @@ export class AppController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   async getProfile(@Request() req) {
+    console.log(" getProfile --------------------------- ", req.user);
+    
     return this.appService.getUserProfile(req.user.userId);
   }
 }

@@ -14,6 +14,8 @@ export class AuthServiceController {
 
   @MessagePattern('login')
   async login(@Payload() loginDto: LoginDto) {
+    console.log("KAIIIIIII!!! mipass leizyATO ZAO IZY MANDALO AA!!!!!!! api-gateway/src/app.controller.ts", loginDto);
+
     return this.authService.login(loginDto);
   }
 
