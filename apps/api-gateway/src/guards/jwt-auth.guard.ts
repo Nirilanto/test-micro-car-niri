@@ -8,37 +8,29 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
-    
+
     if (!token) {
       throw new UnauthorizedException('Authentification requise');
     }
-    
+
     try {
-      console.log("ITOOOOOOOOOOOOOOOOOOOO ", this.configService.get<string>('JWT_SECRET'));
-      
       const payload = await this.jwtService.verifyAsync(token, {
         secret: this.configService.get<string>('JWT_SECRET')
       });
 
-      console.log(" payload --------------------------------- ", payload);
-      
-      
       // Attacher l'utilisateur à la requête
       request['user'] = {
         userId: payload.sub,
         email: payload.email
       };
-    } catch(e) {
-      console.log("SSSSSSSSSSSHHHHHHHHH!!!! ", e);
-      
+    } catch (e) {
       throw new UnauthorizedException('Token invalide ou expiré');
     }
-    
     return true;
   }
 

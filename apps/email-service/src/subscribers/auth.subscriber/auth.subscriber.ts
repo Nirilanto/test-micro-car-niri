@@ -1,3 +1,4 @@
+// email-service/src/subscribers/auth.subscriber.ts
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { EmailService } from '../../email/email.service';

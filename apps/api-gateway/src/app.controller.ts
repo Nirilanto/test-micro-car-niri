@@ -35,8 +35,6 @@ export class AppController {
   @ApiResponse({ status: 401, description: 'Identifiants invalides' })
   @Post('auth/login')
   async login(@Body() loginDto: LoginDto) {
-    console.log("ATO ZAO IZY MANDALO AA!!!!!!! api-gateway/src/app.controller.ts", loginDto);
-    
     return this.appService.login(loginDto);
   }
 

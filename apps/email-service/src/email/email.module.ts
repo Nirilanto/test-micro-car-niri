@@ -5,7 +5,7 @@ import { EmailService } from './email.service';
 
 @Module({
   imports: [
-    ConfigModule, // Importation du ConfigModule
+    ConfigModule,
   ],
   providers: [EmailService],
   exports: [EmailService],

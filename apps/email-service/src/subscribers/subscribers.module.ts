@@ -9,6 +9,7 @@ import { FileSubscriber } from './file.subscriber/file.subscriber';
     ConfigModule.forRoot(),
     EmailModule,
   ],
-  providers: [AuthSubscriber, FileSubscriber],
+  controllers: [AuthSubscriber, FileSubscriber],
+  providers: [],
 })
 export class SubscribersModule {}

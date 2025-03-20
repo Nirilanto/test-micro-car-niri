@@ -22,10 +22,20 @@ export class EmailService {
   }
 
   private async compileTemplate(templateName: string, context: any): Promise<string> {
-    const templatePath = path.join(__dirname, '..', 'templates', `${templateName}.hbs`);
-    const source = fs.readFileSync(templatePath, 'utf-8');
-    const template = handlebars.compile(source);
-    return template(context);
+    const templatePath = path.join(__dirname, 'templates', `${templateName}.hbs`);
+    try {
+      console.log(`Chargement du template: ${templatePath}`);
+      const source = fs.readFileSync(templatePath, 'utf-8');
+      const template = handlebars.compile(source);
+      return template(context);
+    } catch (error) {
+      console.error(`Erreur lors de la compilation du template ${templateName}: ${error.message}`);
+      // Afficher le chemin courant pour le débogage
+      console.debug(`Répertoire courant: ${process.cwd()}`);
+      console.debug(`Répertoires disponibles: ${fs.readdirSync(process.cwd()).join(', ')}`);
+      
+      throw error;
+    }
   }
 
   async sendUserRegistration(email: string, verificationToken: string): Promise<void> {

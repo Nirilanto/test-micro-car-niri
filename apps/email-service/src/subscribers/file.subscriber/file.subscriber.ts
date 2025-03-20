@@ -1,10 +1,13 @@
+// email-service/src/subscribers/file.subscriber.ts
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { EmailService } from '../../email/email.service';
 
 @Controller()
 export class FileSubscriber {
-  constructor(private emailService: EmailService) {}
+  constructor(private emailService: EmailService) {
+    console.log('FileSubscriber initialisé et prêt à écouter les événements document_uploaded');
+  }
 
   @EventPattern('document_uploaded')
   async handleDocumentUploaded(@Payload() data: { userId: string; fileId: string; filename: string; email: string }) {
