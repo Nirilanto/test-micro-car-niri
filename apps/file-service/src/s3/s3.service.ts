@@ -16,7 +16,7 @@ export class S3Service {
     const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID') || 'minio';
     const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY') || 'minio123';
     const region = this.configService.get<string>('AWS_REGION') || 'us-east-1';
-    
+
     // Stocker le nom du bucket comme propriété de classe
     this.bucketName = this.configService.get<string>('AWS_BUCKET_NAME') || 'car-rental-documents';
 
@@ -51,24 +51,39 @@ export class S3Service {
     }
   }
 
-  async uploadFile(file: Express.Multer.File, userId: string): Promise<{ key: string; url: string }> {
+  async uploadFile(file: any, userId: string): Promise<{ key: string; url: string }> {
+    if (!file || !file.buffer || !Buffer.isBuffer(file.buffer)) {
+      this.logger.error(`Format de fichier invalide pour S3: ${JSON.stringify({
+        hasFile: !!file,
+        hasBuffer: file ? !!file.buffer : false,
+        bufferType: file && file.buffer ? typeof file.buffer : 'none',
+        isBuffer: file && file.buffer ? Buffer.isBuffer(file.buffer) : false
+      })}`);
+      throw new Error('Format de fichier invalide pour l\'upload S3');
+    }
+
     const fileExt = file.originalname.split('.').pop() || '';
     const key = `users/${userId}/${uuid()}.${fileExt}`;
-    
+
+    this.logger.log(`Tentative d'upload sur S3: ${key} (${file.mimetype}, ${file.size} bytes)`);
+
     const params = {
       Bucket: this.bucketName,
       Key: key,
       Body: file.buffer,
       ContentType: file.mimetype,
     };
-    
+
     try {
       const uploadResult = await this.s3.upload(params).promise();
-      this.logger.log(`File uploaded successfully: ${key}`);
-      
+      this.logger.log(`File uploaded successfully: ${key}, ETag: ${uploadResult.ETag}`);
+
+      const signedUrl = await this.getSignedUrl(key);
+      this.logger.log(`URL signée générée pour ${key}`);
+
       return {
         key,
-        url: await this.getSignedUrl(key),
+        url: signedUrl,
       };
     } catch (error) {
       this.logger.error(`Failed to upload file: ${key}`, error);
@@ -81,7 +96,7 @@ export class S3Service {
       Bucket: this.bucketName,
       Key: key,
     };
-    
+
     try {
       await this.s3.deleteObject(params).promise();
       this.logger.log(`File deleted successfully: ${key}`);
@@ -97,7 +112,7 @@ export class S3Service {
       Key: key,
       Expires: expiresIn,
     };
-    
+
     try {
       return await this.s3.getSignedUrlPromise('getObject', params);
     } catch (error) {

@@ -1,5 +1,5 @@
 // file-service/src/uploads/entities/file.entity.ts
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('files')
 export class File {
@@ -24,9 +24,12 @@ export class File {
   @Column()
   s3Key: string;
 
-  @Column({ nullable: true })
+  @Column()
   s3Url: string;
 
   @CreateDateColumn()
   uploadedAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

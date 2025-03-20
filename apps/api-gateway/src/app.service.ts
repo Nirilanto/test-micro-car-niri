@@ -92,13 +92,40 @@ export class AppService {
   }
 
   async uploadFile(file: Express.Multer.File, userId: string) {
+    console.log('Gateway: préparation upload pour utilisateur:', userId, {
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+      size: file.size,
+      hasBuffer: !!file.buffer
+    });
+    
     try {
+      // Convertir le buffer en Base64 String pour le transport via RabbitMQ
+      const fileToSend = {
+        fieldname: file.fieldname,
+        originalname: file.originalname,
+        encoding: file.encoding,
+        mimetype: file.mimetype,
+        // Stocker le buffer sous forme de string base64
+        bufferBase64: file.buffer.toString('base64'),
+        size: file.size
+      };
+      
       return await firstValueFrom(
-        this.fileClient.send('upload_file', { file, userId }).pipe(
-          timeout(30000), // Plus long pour l'upload de fichiers
+        this.fileClient.send('upload_file', { 
+          file: fileToSend, 
+          userId 
+        }).pipe(
+          timeout(30000),
           catchError(err => {
-            console.error('Erreur lors du téléversement de fichier:', err.message);
-            return throwError(() => err);
+            console.error('Erreur lors du téléversement de fichier:', err);
+            // S'assurer que l'erreur a un code de statut HTTP valide (nombre entier)
+            const statusCode = typeof err.status === 'number' ? err.status : 500;
+            
+            return throwError(() => new HttpException(
+              err.message || 'Erreur lors du téléversement de fichier',
+              statusCode
+            ));
           })
         )
       );

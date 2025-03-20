@@ -1,20 +1,37 @@
+// file-service/src/file-service.controller.ts
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { UploadsService } from './uploads/uploads.service';
-import { UploadFileDto } from '@app/common';
 
 @Controller()
 export class FileServiceController {
-  constructor(private readonly uploadsService: UploadsService) {}
+  constructor(private readonly uploadsService: UploadsService) { }
 
   @MessagePattern('upload_file')
-  async uploadFile(@Payload() data: { file: Express.Multer.File, uploadFileDto: UploadFileDto }) {
-    return this.uploadsService.uploadFile(data.file, data.uploadFileDto.userId);
+  async uploadFile(@Payload() data: any) {
+    console.log('FileServiceController received upload request:', {
+      dataKeys: Object.keys(data),
+      hasFile: !!data.file,
+      hasUserId: !!data.userId,
+      fileBufferType: data.file ? (data.file.buffer ? 'buffer' : (data.file.bufferBase64 ? 'base64' : 'none')) : 'no-file'
+    });
+
+    if (data && data.file && data.userId) {
+      return this.uploadsService.uploadFile(data.file, data.userId);
+    } else {
+      throw new Error('Données incomplètes: file ou userId manquant');
+    }
   }
 
   @MessagePattern('get_files_by_user')
   async getFilesByUser(@Payload() userId: string) {
+    console.log('Getting files for user:', userId);
     return this.uploadsService.getFilesByUserId(userId);
+  }
+
+  @MessagePattern('get_file_by_id')
+  async getFileById(@Payload() data: { fileId: string, userId: string }) {
+    return this.uploadsService.getFileById(data.fileId, data.userId);
   }
 
   @MessagePattern('delete_file')
