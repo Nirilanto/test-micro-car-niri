@@ -14,7 +14,7 @@ export class EmailService {
 
   constructor(private configService: ConfigService) {
     this.isDev = this.configService.get('NODE_ENV') !== 'production';
-    
+
     if (this.isDev) {
       // Configuration pour MailHog en développement
       this.logger.log('Initialisation du service d\'email avec MailHog');
@@ -51,7 +51,7 @@ export class EmailService {
   }
 
   private async compileTemplate(templateName: string, context: any): Promise<string> {
-    const templatePath = path.join(__dirname, '..', 'templates', `${templateName}.hbs`);
+    const templatePath = path.join(__dirname, '../../../', '/libs/common/templates', `${templateName}.hbs`);
     try {
       const source = fs.readFileSync(templatePath, 'utf-8');
       const template = handlebars.compile(source);
@@ -63,14 +63,14 @@ export class EmailService {
   }
 
   async sendUserRegistration(email: string, verificationToken: string): Promise<void> {
-    this.logger.log(`Envoi d'email de vérification à ${email}`);
-    
+    console.log(`Envoi d'email de vérification à sendUserRegistration .................. ${email}`);
+
     const verificationUrl = `${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/verify-email?token=${verificationToken}`;
-    
+
     const html = await this.compileTemplate('registration', {
       verificationUrl,
     });
-    
+
     try {
       const info = await this.transporter.sendMail({
         from: this.configService.get('EMAIL_FROM', 'noreply@car-rental.com'),
@@ -78,7 +78,7 @@ export class EmailService {
         subject: 'Bienvenue chez Car Rental - Vérifiez votre email',
         html,
       });
-      
+
       if (this.isDev) {
         // En développement, afficher l'URL pour voir l'email dans MailHog
         this.logger.log(`Email envoyé avec succès à ${email}. ID du message: ${info.messageId}`);
@@ -93,13 +93,14 @@ export class EmailService {
   }
 
   async sendDocumentUploaded(email: string, filename: string): Promise<void> {
-    this.logger.log(`Envoi d'email de confirmation de téléversement à ${email}`);
-    
+    console.log(`Envoi d'email de vérification à sendDocumentUploaded ok ok ok  .................. ${email}`);
+    if (!email) return
+
     const html = await this.compileTemplate('document-upload', {
       filename,
       dashboardUrl: `${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/dashboard`,
     });
-    
+
     try {
       const info = await this.transporter.sendMail({
         from: this.configService.get('EMAIL_FROM', 'noreply@car-rental.com'),
@@ -107,7 +108,7 @@ export class EmailService {
         subject: 'Document téléversé avec succès',
         html,
       });
-      
+
       if (this.isDev) {
         this.logger.log(`Email envoyé avec succès à ${email}. ID du message: ${info.messageId}`);
         this.logger.log(`Voir l'email dans MailHog: http://localhost:8025`);
@@ -122,13 +123,13 @@ export class EmailService {
 
   async sendPasswordReset(email: string, resetToken: string): Promise<void> {
     this.logger.log(`Envoi d'email de réinitialisation de mot de passe à ${email}`);
-    
+
     const resetUrl = `${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/reset-password?token=${resetToken}`;
-    
+
     const html = await this.compileTemplate('password-reset', {
       resetUrl,
     });
-    
+
     try {
       const info = await this.transporter.sendMail({
         from: this.configService.get('EMAIL_FROM', 'noreply@car-rental.com'),
@@ -136,7 +137,7 @@ export class EmailService {
         subject: 'Réinitialisation de mot de passe',
         html,
       });
-      
+
       if (this.isDev) {
         this.logger.log(`Email envoyé avec succès à ${email}. ID du message: ${info.messageId}`);
         this.logger.log(`Voir l'email dans MailHog: http://localhost:8025`);
