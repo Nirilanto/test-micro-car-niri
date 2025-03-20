@@ -1,7 +1,6 @@
-// src/context/ThemeContext.tsx
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -10,33 +9,44 @@ interface ThemeContextType {
   setTheme: (theme: Theme) => void
 }
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
-
-interface ThemeProviderProps {
-  children: ReactNode
-  defaultTheme?: Theme
+// Valeur par défaut du contexte
+const defaultValue: ThemeContextType = {
+  theme: 'system',
+  setTheme: () => {},
 }
 
-export function ThemeProvider({
-  children,
-  defaultTheme = 'system',
-}: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme)
+// Création du contexte avec une valeur par défaut
+const ThemeContext = createContext<ThemeContextType>(defaultValue)
 
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>('system')
+  const [mounted, setMounted] = useState(false)
+
+  // Fonction pour définir le thème
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme)
+    // Stocker dans localStorage seulement côté client
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', newTheme)
+    }
+  }
+
+  // Initialiser le thème depuis localStorage au montage
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme | null
-    if (savedTheme) {
-      setTheme(savedTheme)
+    setMounted(true)
+    const storedTheme = localStorage.getItem('theme') as Theme | null
+    if (storedTheme && ['light', 'dark', 'system'].includes(storedTheme)) {
+      setThemeState(storedTheme)
     }
   }, [])
 
+  // Appliquer le thème au document
   useEffect(() => {
-    const root = window.document.documentElement
-    
-    // Supprimer les classes existantes
+    if (!mounted) return
+
+    const root = document.documentElement
     root.classList.remove('light', 'dark')
 
-    // Déterminer le thème à appliquer
     if (theme === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
         ? 'dark'
@@ -45,26 +55,7 @@ export function ThemeProvider({
     } else {
       root.classList.add(theme)
     }
-
-    // Sauvegarder le thème dans localStorage
-    localStorage.setItem('theme', theme)
-  }, [theme])
-
-  // Ajouter un écouteur pour le thème système
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    
-    const handleChange = () => {
-      if (theme === 'system') {
-        const root = window.document.documentElement
-        root.classList.remove('light', 'dark')
-        root.classList.add(mediaQuery.matches ? 'dark' : 'light')
-      }
-    }
-    
-    mediaQuery.addEventListener('change', handleChange)
-    return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [theme])
+  }, [theme, mounted])
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
@@ -73,12 +64,6 @@ export function ThemeProvider({
   )
 }
 
-export function useTheme(): ThemeContextType {
-  const context = useContext(ThemeContext)
-  
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider')
-  }
-  
-  return context
+export function useTheme() {
+  return useContext(ThemeContext)
 }

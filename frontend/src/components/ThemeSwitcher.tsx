@@ -1,31 +1,27 @@
-// src/components/ThemeSwitcher.tsx
 'use client'
 
-import { useTheme } from '@/context/ThemeContext'
 import { useState, useEffect } from 'react'
+import { useTheme } from '@/context/ThemeContext'
 import { Moon, Sun, Monitor } from 'lucide-react'
 
 export default function ThemeSwitcher() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
-  // Lorsque l'on utilise un état lié au thème, cette méthode est importante
-  // pour éviter des problèmes d'hydratation
+  // Montage du composant
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  // Ne rien rendre jusqu'au montage côté client
   if (!mounted) return null
 
+  // Rendre les boutons de changement de thème
   return (
     <div className="flex items-center space-x-2">
       <button
         onClick={() => setTheme('light')}
-        className={`p-2 rounded-full ${
-          theme === 'light' 
-            ? 'bg-primary text-primary-foreground' 
-            : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-        }`}
+        className="p-2 rounded-md bg-gray-200 dark:bg-gray-700"
         aria-label="Mode clair"
       >
         <Sun size={18} />
@@ -33,11 +29,7 @@ export default function ThemeSwitcher() {
       
       <button
         onClick={() => setTheme('dark')}
-        className={`p-2 rounded-full ${
-          theme === 'dark' 
-            ? 'bg-primary text-primary-foreground' 
-            : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-        }`}
+        className="p-2 rounded-md bg-gray-200 dark:bg-gray-700"
         aria-label="Mode sombre"
       >
         <Moon size={18} />
@@ -45,11 +37,7 @@ export default function ThemeSwitcher() {
       
       <button
         onClick={() => setTheme('system')}
-        className={`p-2 rounded-full ${
-          theme === 'system' 
-            ? 'bg-primary text-primary-foreground' 
-            : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-        }`}
+        className="p-2 rounded-md bg-gray-200 dark:bg-gray-700"
         aria-label="Mode système"
       >
         <Monitor size={18} />

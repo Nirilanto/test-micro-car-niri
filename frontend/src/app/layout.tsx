@@ -1,11 +1,8 @@
-// src/app/layout.tsx
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { AuthProvider } from '@/context/AuthContext'
-import { ThemeProvider } from '@/context/ThemeContext'
+import ClientProviders from '@/components/ClientProviders'
 import Header from '@/components/Header'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -23,22 +20,19 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider>
-          <AuthProvider>
-            <div className="min-h-screen flex flex-col">
-              <Header />
-              <main className="flex-grow container mx-auto px-4 py-8">
-                {children}
-              </main>
-              <footer className="bg-card text-card-foreground py-4">
-                <div className="container mx-auto px-4 text-center">
-                  © {new Date().getFullYear()} Car Rental. Tous droits réservés.
-                </div>
-              </footer>
-              <ToastContainer position="bottom-right" theme="colored" />
-            </div>
-          </AuthProvider>
-        </ThemeProvider>
+        <ClientProviders>
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-grow container mx-auto px-4 py-8">
+              {children}
+            </main>
+            <footer className="bg-card text-card-foreground py-4">
+              <div className="container mx-auto px-4 text-center">
+                © {new Date().getFullYear()} Car Rental. Tous droits réservés.
+              </div>
+            </footer>
+          </div>
+        </ClientProviders>
       </body>
     </html>
   )

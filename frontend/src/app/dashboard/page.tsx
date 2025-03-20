@@ -6,6 +6,7 @@ import axios from 'axios'
 import Link from 'next/link'
 import { toast } from 'react-toastify'
 import Button from '@/components/ui/Button'
+import { fileService } from '@/lib/api'
 
 interface File {
   id: string
@@ -24,8 +25,8 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        const response = await axios.get('/api/files')
-        setFiles(response.data)
+        const response = await fileService.getFiles()
+        setFiles(response)
       } catch (error) {
         console.error('Error fetching files:', error)
         toast.error('Erreur lors du chargement des fichiers')
@@ -43,7 +44,7 @@ export default function Dashboard() {
     }
 
     try {
-      await axios.delete(`/api/files/${id}`)
+      await fileService.deleteFile(id)
       setFiles(files.filter(file => file.id !== id))
       toast.success('Fichier supprimé avec succès')
     } catch (error) {
