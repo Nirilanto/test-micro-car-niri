@@ -12,7 +12,7 @@ export class S3Service {
 
   constructor(private configService: ConfigService) {
     // Utiliser des valeurs par défaut pour éviter les undefined
-    const endpoint = this.configService.get<string>('AWS_ENDPOINT') || 'http://localhost:9000';
+    const endpoint = this.configService.get<string>('AWS_ENDPOINT') || 'http://85.239.244.252/8:9000';
     const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID') || 'minio';
     const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY') || 'minio123';
     const region = this.configService.get<string>('AWS_REGION') || 'us-east-1';
@@ -91,15 +91,16 @@ export class S3Service {
     }
   }
 
-  async deleteFile(key: string): Promise<void> {
+  async deleteFile(key: string): Promise<{ deleted: boolean }> {
     const params = {
       Bucket: this.bucketName,
       Key: key,
     };
-
+    
     try {
       await this.s3.deleteObject(params).promise();
       this.logger.log(`File deleted successfully: ${key}`);
+      return { deleted: true };
     } catch (error) {
       this.logger.error(`Failed to delete file: ${key}`, error);
       throw error;

@@ -140,7 +140,7 @@ export class UploadsService {
     };
   }
   
-  async deleteFile(fileId: string, userId: string): Promise<void> {
+  async deleteFile(fileId: string, userId: string): Promise<{ success: boolean; message: string }> {
     const file = await this.filesRepository.findOne({ 
       where: { id: fileId, userId } 
     });
@@ -149,10 +149,21 @@ export class UploadsService {
       throw new NotFoundException('Fichier non trouvé ou non autorisé');
     }
     
-    // Supprimer de S3
-    await this.s3Service.deleteFile(file.s3Key);
-    
-    // Supprimer de la base de données
-    await this.filesRepository.remove(file);
+    try {
+      // Supprimer de S3
+      await this.s3Service.deleteFile(file.s3Key);
+      
+      // Supprimer de la base de données
+      await this.filesRepository.remove(file);
+      
+      // Renvoyer une réponse explicite
+      return {
+        success: true,
+        message: `Fichier ${fileId} supprimé avec succès`
+      };
+    } catch (error) {
+      console.error('Erreur lors de la suppression du fichier:', error);
+      throw new InternalServerErrorException(`Erreur lors de la suppression du fichier: ${error.message}`);
+    }
   }
 }

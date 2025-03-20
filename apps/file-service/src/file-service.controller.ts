@@ -36,6 +36,12 @@ export class FileServiceController {
 
   @MessagePattern('delete_file')
   async deleteFile(@Payload() data: { fileId: string, userId: string }) {
-    return this.uploadsService.deleteFile(data.fileId, data.userId);
+    console.log(`FileServiceController: demande de suppression du fichier ${data.fileId} pour l'utilisateur ${data.userId}`);
+
+    const result = await this.uploadsService.deleteFile(data.fileId, data.userId);
+
+    console.log(`FileServiceController: résultat de la suppression:`, result);
+    // S'assurer qu'une valeur est toujours renvoyée
+    return result;
   }
 }

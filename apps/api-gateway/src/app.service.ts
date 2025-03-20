@@ -1,6 +1,6 @@
 import { Injectable, Inject, HttpException, UnauthorizedException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { catchError, firstValueFrom, throwError, timeout } from 'rxjs';
+import { catchError, defaultIfEmpty, firstValueFrom, throwError, timeout } from 'rxjs';
 import { LoginDto, RegisterDto, UserResponseDto } from '@app/common';
 
 @Injectable()
@@ -153,22 +153,35 @@ export class AppService {
   }
 
   async deleteFile(fileId: string, userId: string) {
+    console.log(`Gateway: demande de suppression du fichier ${fileId} pour l'utilisateur ${userId}`);
+    
     try {
-      return await firstValueFrom(
+      const result = await firstValueFrom(
         this.fileClient.send('delete_file', { fileId, userId }).pipe(
           timeout(10000),
+          // Ajouter un fallback en cas d'observable vide
+          defaultIfEmpty({ success: true, message: 'Fichier supprimé (aucune réponse détaillée)' }),
           catchError(err => {
-            console.error('Erreur lors de la suppression du fichier:', err.message);
-            return throwError(() => err);
+            console.error('Erreur lors de la suppression du fichier:', err);
+            
+            // S'assurer que l'erreur a un code de statut HTTP valide
+            const statusCode = typeof err.status === 'number' ? err.status : 500;
+            
+            return throwError(() => new HttpException(
+              err.message || 'Erreur lors de la suppression du fichier',
+              statusCode
+            ));
           })
         )
       );
+      
+      console.log(`Gateway: résultat de la suppression:`, result);
+      return result;
     } catch (error) {
       console.error('Erreur dans le processus de suppression de fichier:', error.message);
       throw error;
     }
   }
-
   async getFileById(fileId: string, userId: string) {
     try {
       return await firstValueFrom(
