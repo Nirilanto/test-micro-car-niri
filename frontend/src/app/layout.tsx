@@ -27,9 +27,13 @@ export default function RootLayout({
               {children}
             </main>
             <footer className="bg-card text-card-foreground py-4">
-              <div className="container mx-auto px-4 text-center">
+              <p className="flex items-center justify-center gap-1">
+                <span className="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+                <span className="inline-block w-2 h-2 rounded-full bg-purple-500"></span>
                 © {new Date().getFullYear()} Car Rental. Tous droits réservés.
-              </div>
+                <span className="inline-block w-2 h-2 rounded-full bg-purple-500"></span>
+                <span className="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+              </p>
             </footer>
           </div>
         </ClientProviders>
