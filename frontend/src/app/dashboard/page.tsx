@@ -1,13 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import { toast } from 'react-toastify'
 import Button from '@/components/ui/Button'
 import { fileService } from '@/lib/api'
 import { FileUp } from 'lucide-react'
-import FileTable from '@/components/FileTable'
+import FileTable from '@/components/FileTable/FileTable'
 import EmptyState from '@/components/EmptyState'
 import LoadingState from '@/components/LoadingState'
 
